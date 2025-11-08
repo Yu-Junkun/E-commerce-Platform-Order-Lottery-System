@@ -229,7 +229,7 @@ elif st.session_state.current_page == "draw":
         if st.button("验证密码", type="primary"):
             if hash_password(password_input) == INITIAL_PASSWORD_HASH_DRAW:
                 st.session_state.authenticated = True
-                # st.rerun()
+                st.rerun()
             else:
                 st.error("密码错误，请重新输入")
     else:
@@ -240,7 +240,7 @@ elif st.session_state.current_page == "draw":
         with col2:
             if st.button("退出", type="primary", use_container_width=True):
                 st.session_state.authenticated = False
-                # st.rerun()
+                st.rerun()
         
         # 选择平台
         selected_platforms = []
@@ -317,7 +317,7 @@ elif st.session_state.current_page == "draw":
                     st.warning("可选订单已耗尽（所有订单均已中奖）")
                 else:
                     st.session_state.is_rolling = True  # 启动轮播
-                    # st.rerun()  # 立即刷新状态以启动轮播
+                    st.rerun()  # 立即刷新状态以启动轮播
             
             
 
@@ -329,7 +329,7 @@ elif st.session_state.current_page == "draw":
                 if st.session_state.current_rolling_order[0]:  # 订单号有效
                     st.session_state.final_winners.append(st.session_state.current_rolling_order)
                     st.success(f"已选中第 {len(st.session_state.final_winners)}/{winner_count} 个中奖订单！")
-                    # st.rerun()
+                    st.rerun()
 
         with col_reset:
             # 重置按钮的禁用条件：没有选中的订单时禁用
@@ -338,7 +338,7 @@ elif st.session_state.current_page == "draw":
                 st.session_state.final_winners = []
                 st.session_state.is_rolling = False
                 st.success("已重置当前轮次，可重新开始抽奖")
-                # st.rerun()
+                st.rerun()
 
 
         # 重新计算符合条件的订单，避免状态不一致
@@ -492,7 +492,7 @@ elif st.session_state.current_page == "results":
     if not st.session_state.reset_history_confirmed:
         if st.button("⚠️ 重置所有抽奖历史", type="primary"):
             st.session_state.reset_history_confirmed = True
-            # st.rerun()  # 刷新页面显示确认选项
+            st.rerun()  # 刷新页面显示确认选项
     else:
         # 显示确认选项
         st.info("请确认是否要继续重置所有抽奖历史记录？")
@@ -557,13 +557,13 @@ elif st.session_state.current_page == "results":
                 st.session_state.reset_history_confirmed = False
                 
                 # 强制刷新页面以显示空状态
-                # st.rerun()
+                st.rerun()
         
         with col2:
             if st.button("❌ 取消重置", type="primary", use_container_width=True):
                 st.session_state.reset_history_confirmed = False
                 st.info("已取消重置操作")
-                # st.rerun()
+                st.rerun()
 
 # ============================
 # 功能4: 订单池管理
@@ -579,7 +579,7 @@ elif st.session_state.current_page == "order_pool_management":
             if hash_password(password_input) == INITIAL_PASSWORD_HASH_ORDER_MANAGEMENT:
                 st.session_state.pool_management_authenticated = True
                 st.success("密码正确，欢迎进入订单池管理功能！")
-                # st.rerun()
+                st.rerun()
             else:
                 st.error("密码错误，请重新输入")
     else:
@@ -590,7 +590,7 @@ elif st.session_state.current_page == "order_pool_management":
         with col2:
             if st.button("退出", type="primary", use_container_width=True, key="pool_management_exit"):
                 st.session_state.pool_management_authenticated = False
-                # st.rerun()
+                st.rerun()
         
         # 显示当前订单池信息
         total_orders = sum(len(orders) for orders in st.session_state.order_pool.values())
@@ -751,7 +751,7 @@ elif st.session_state.current_page == "order_pool_management":
             if st.button("保存为初始化数据", type="primary", key="save_initial_btn"):
                 st.session_state.confirm_save = True
                 # 使用rerun来立即更新UI状态
-                # st.rerun()
+                st.rerun()
         else:
             # 第二步：显示确认信息和确认按钮
             st.warning("⚠️ 确定要将当前订单池保存为初始化数据吗？此操作会覆盖现有的初始化数据！")
@@ -776,7 +776,7 @@ elif st.session_state.current_page == "order_pool_management":
                     # 取消保存，重置确认状态
                     st.session_state.confirm_save = False
                     # 使用rerun来立即更新UI状态
-                    # st.rerun()
+                    st.rerun()
 
         # 重置订单池功能
         st.subheader("重置订单池")
@@ -790,7 +790,7 @@ elif st.session_state.current_page == "order_pool_management":
         if not st.session_state.reset_confirmed:
             if st.button("⚠️ 重置订单池", type="primary"):
                 st.session_state.reset_confirmed = True
-                # st.rerun()  # 刷新页面显示确认选项
+                st.rerun()  # 刷新页面显示确认选项
         else:
             # 显示确认选项
             st.info("请确认是否要继续重置订单池操作？")
@@ -863,15 +863,16 @@ elif st.session_state.current_page == "order_pool_management":
                     st.session_state.reset_confirmed = False
                     
                     # 强制刷新页面以显示空订单池状态
-                    # st.rerun()
+                    st.rerun()
             
             with col2:
                 if st.button("❌ 取消重置", type="primary", use_container_width=True):
                     st.session_state.reset_confirmed = False
                     st.info("已取消重置操作")
-                    # st.rerun()    
+                    st.rerun()    
         
 
         
+
 
 
