@@ -388,7 +388,7 @@ elif st.session_state.current_page == "draw":
             winner_df = pd.DataFrame(st.session_state.final_winners, columns=['订单号', '平台'])
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             winner_df['时间'] = current_time
-            st.dataframe(winner_df, use_container_width=True)
+            st.dataframe(winner_df)
         
         # 完成抽奖处理
         if len(st.session_state.final_winners) == winner_count:
@@ -873,4 +873,5 @@ elif st.session_state.current_page == "order_pool_management":
         
 
         
+
 
