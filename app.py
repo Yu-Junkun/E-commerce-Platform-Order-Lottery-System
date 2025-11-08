@@ -293,8 +293,8 @@ elif st.session_state.current_page == "draw":
         with col_start:
             # 开始抽奖按钮的禁用条件
             start_disabled = (
-                st.session_state.is_rolling  # 正在轮播时禁用
-                or len(eligible_orders) == 0  # 无可选订单时禁用
+                # st.session_state.is_rolling  # 正在轮播时禁用
+                len(eligible_orders) == 0  # 无可选订单时禁用
                 or len(st.session_state.final_winners) >= winner_count  # 已抽满时禁用
                 or total_orders_in_selected_platforms <= winner_count  # 选中平台订单数不足时禁用
             )
@@ -329,7 +329,7 @@ elif st.session_state.current_page == "draw":
                 if st.session_state.current_rolling_order[0]:  # 订单号有效
                     st.session_state.final_winners.append(st.session_state.current_rolling_order)
                     st.success(f"已选中第 {len(st.session_state.final_winners)}/{winner_count} 个中奖订单！")
-                st.rerun()
+                    st.rerun()
 
         with col_reset:
             # 重置按钮的禁用条件：没有选中的订单时禁用
@@ -871,4 +871,5 @@ elif st.session_state.current_page == "order_pool_management":
                     st.info("已取消重置操作")
                     st.rerun()    
         
+
         
