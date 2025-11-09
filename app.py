@@ -435,90 +435,90 @@ elif st.session_state.current_page == "draw":
                 st.session_state.final_winners = []
                 st.session_state.current_rolling_order = ("", "")
         # 重置所有抽奖历史功能
-    st.subheader("历史记录管理")
-    st.warning("⚠️ 重置所有抽奖历史将清除所有现有抽奖记录，请谨慎操作！")
-    
-    # 使用会话状态实现确认流程
-    # 初始化确认状态（如果不存在）
-    if 'reset_history_confirmed' not in st.session_state:
-        st.session_state.reset_history_confirmed = False
+        st.subheader("历史记录管理")
+        st.warning("⚠️ 重置所有抽奖历史将清除所有现有抽奖记录，请谨慎操作！")
         
-    # 主重置按钮
-    if not st.session_state.reset_history_confirmed:
-        if st.button("⚠️ 重置所有抽奖历史", type="primary"):
-            st.session_state.reset_history_confirmed = True
-            st.rerun()  # 刷新页面显示确认选项
-    else:
-        # 显示确认选项
-        st.info("请确认是否要继续重置所有抽奖历史记录？")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("✅ 确认重置", type="primary", use_container_width=True):
-                # 执行重置操作
-                st.session_state.winners = []
-                st.session_state.current_draw_winners = []
-                
-                # 显示详细的操作信息
-                st.write("🔄 开始执行重置操作...")
-                
-                # 直接操作文件，确保清空
-                success = False
-                try:
-                    # 获取文件的绝对路径
-                    current_dir = os.getcwd()
-                    file_path = os.path.join(current_dir, 'winners.json')
-                    st.write(f"📍 文件路径: {file_path}")
+        # 使用会话状态实现确认流程
+        # 初始化确认状态（如果不存在）
+        if 'reset_history_confirmed' not in st.session_state:
+            st.session_state.reset_history_confirmed = False
+            
+        # 主重置按钮
+        if not st.session_state.reset_history_confirmed:
+            if st.button("⚠️ 重置所有抽奖历史", type="primary"):
+                st.session_state.reset_history_confirmed = True
+                st.rerun()  # 刷新页面显示确认选项
+        else:
+            # 显示确认选项
+            st.info("请确认是否要继续重置所有抽奖历史记录？")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("✅ 确认重置", type="primary", use_container_width=True):
+                    # 执行重置操作
+                    st.session_state.winners = []
+                    st.session_state.current_draw_winners = []
                     
-                    # 检查文件是否存在
-                    if os.path.exists(file_path):
-                        st.write(f"✅ 找到文件: {file_path}")
-                    else:
-                        st.write(f"⚠️ 文件不存在，将创建新文件: {file_path}")
+                    # 显示详细的操作信息
+                    st.write("🔄 开始执行重置操作...")
                     
-                    # 直接写入空数组数据
-                    st.write("📝 正在写入空数据...")
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        json.dump([], f, ensure_ascii=False, indent=2)
-                    st.write("✅ 数据写入完成")
-                    
-                    # 验证文件是否已清空
-                    st.write("🔍 正在验证文件内容...")
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = json.load(f)
-                        st.write(f"📊 验证结果: 文件包含 {len(content)} 条记录")
-                        # 确保文件内容为空数组
-                        if isinstance(content, list) and len(content) == 0:
-                            st.success("✅ winners.json文件已成功清空")
-                            success = True
+                    # 直接操作文件，确保清空
+                    success = False
+                    try:
+                        # 获取文件的绝对路径
+                        current_dir = os.getcwd()
+                        file_path = os.path.join(current_dir, 'winners.json')
+                        st.write(f"📍 文件路径: {file_path}")
+                        
+                        # 检查文件是否存在
+                        if os.path.exists(file_path):
+                            st.write(f"✅ 找到文件: {file_path}")
                         else:
-                            st.error("❌ 文件清空验证失败，文件中仍有数据")
-                except Exception as e:
-                    st.error(f"❌ 清空文件时发生错误: {str(e)}")
-                    st.exception(e)  # 显示完整的异常信息
-                
-                # 调用save_winners确保一致性
-                st.write("⚙️ 确保数据一致性...")
-                save_winners([])
-                
-                # 显示重置结果
-                if success:
-                    st.success("✅ 所有抽奖历史记录已成功重置为空状态")
-                    # 重新加载数据以验证
-                    refreshed_data = load_winners()
-                    st.info(f"📊 当前抽奖历史记录共有 {len(refreshed_data)} 条")
-                
-                # 重置确认状态
-                st.session_state.reset_history_confirmed = False
-                
-                # 强制刷新页面以显示空状态
-                st.rerun()
-        
-        with col2:
-            if st.button("❌ 取消重置", type="primary", use_container_width=True):
-                st.session_state.reset_history_confirmed = False
-                st.info("已取消重置操作")
-                st.rerun()
+                            st.write(f"⚠️ 文件不存在，将创建新文件: {file_path}")
+                        
+                        # 直接写入空数组数据
+                        st.write("📝 正在写入空数据...")
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            json.dump([], f, ensure_ascii=False, indent=2)
+                        st.write("✅ 数据写入完成")
+                        
+                        # 验证文件是否已清空
+                        st.write("🔍 正在验证文件内容...")
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = json.load(f)
+                            st.write(f"📊 验证结果: 文件包含 {len(content)} 条记录")
+                            # 确保文件内容为空数组
+                            if isinstance(content, list) and len(content) == 0:
+                                st.success("✅ winners.json文件已成功清空")
+                                success = True
+                            else:
+                                st.error("❌ 文件清空验证失败，文件中仍有数据")
+                    except Exception as e:
+                        st.error(f"❌ 清空文件时发生错误: {str(e)}")
+                        st.exception(e)  # 显示完整的异常信息
+                    
+                    # 调用save_winners确保一致性
+                    st.write("⚙️ 确保数据一致性...")
+                    save_winners([])
+                    
+                    # 显示重置结果
+                    if success:
+                        st.success("✅ 所有抽奖历史记录已成功重置为空状态")
+                        # 重新加载数据以验证
+                        refreshed_data = load_winners()
+                        st.info(f"📊 当前抽奖历史记录共有 {len(refreshed_data)} 条")
+                    
+                    # 重置确认状态
+                    st.session_state.reset_history_confirmed = False
+                    
+                    # 强制刷新页面以显示空状态
+                    st.rerun()
+            
+            with col2:
+                if st.button("❌ 取消重置", type="primary", use_container_width=True):
+                    st.session_state.reset_history_confirmed = False
+                    st.info("已取消重置操作")
+                    st.rerun()
 
 
 # ============================
@@ -891,3 +891,4 @@ elif st.session_state.current_page == "order_pool_management":
                     st.rerun()    
         
         
+
