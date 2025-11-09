@@ -14,6 +14,7 @@ import streamlit as st
 import random
 import pandas as pd
 from datetime import datetime
+import pytz
 import json
 import os
 import hashlib
@@ -24,7 +25,7 @@ import time
 # 设置页面标题和布局
 # ============================
 st.set_page_config(
-    page_title="抽奖系统",
+    page_title="元更元®",
     page_icon="🎁",
     layout="wide"
 )
@@ -187,7 +188,7 @@ with st.sidebar:
         st.session_state.current_page = "order_pool_management"
     
     # 添加持久化特性说明
-    st.caption("提示: 抽奖记录会自动保存到本地文件，页面刷新后仍可查询")
+    # st.caption("Ver1.2 By 元更元®")
 
 # ============================
 # 功能1: 订单查询
@@ -195,11 +196,11 @@ with st.sidebar:
 # ============================
 if st.session_state.current_page == "order_query":
     st.header("查询您的订单是否在抽奖池")
-    order_input = st.text_input("请输入您的订单编号:")
+    order_input = st.text_input("请输入您的订单编号：")
     
     if st.button("查询", type="primary"):
         if not order_input.strip():
-            st.warning("请输入有效的订单号")
+            st.warning("请输入有效的订单号：")
         else:
             found = False
             platform_name = ""
@@ -212,9 +213,9 @@ if st.session_state.current_page == "order_query":
                     break
             
             if found:
-                st.success(f"🎉 恭喜！您的订单号 {order_input} 在 {platform_name} 抽奖池中！")
+                st.success(f"🎉 恭喜！您的订单号 {order_input} 在 {platform_name} 订单池中！")
             else:
-                st.error(f"❌ 抱歉，订单号 {order_input} 不在抽奖池中")
+                st.error(f"❌ 抱歉，订单号 {order_input} 不在订单池中。")
 
 # ============================
 # 功能2: 抽奖功能
@@ -225,7 +226,7 @@ elif st.session_state.current_page == "draw":
     
     # 密码认证
     if not st.session_state.authenticated:
-        password_input = st.text_input("请输入抽奖密码:", type="password")
+        password_input = st.text_input("请输入抽奖密码：", type="password")
         if st.button("验证密码", type="primary"):
             if hash_password(password_input) == INITIAL_PASSWORD_HASH_DRAW:
                 st.session_state.authenticated = True
@@ -257,7 +258,7 @@ elif st.session_state.current_page == "draw":
         
         # 输入中奖订单数
         winner_count = st.number_input(
-            "请输入中奖订单数:",
+            "请输入本轮抽奖订单数：",
             min_value=1,
             max_value=100,
             value=1
@@ -287,28 +288,28 @@ elif st.session_state.current_page == "draw":
                 if not any(winner[0] == order for winner in st.session_state.final_winners):
                     eligible_orders.append((order, platform))
         
+        # 显示各种错误和警告信息
+        if not selected_platforms:
+            st.warning("请先选择购物平台")
+        elif len(eligible_orders) == 0:
+            st.error("请录入足够的平台订单")
+        elif winner_count > len(eligible_orders):
+            st.error("抽奖订单数不能超过可选订单数")
+            
         # 按钮区域：开始轮播、选中订单、重置当前轮次
         # 抽奖控制按钮
         col_start, col_select, col_reset = st.columns(3)
         with col_start:
             # 开始抽奖按钮的禁用条件
             start_disabled = (
-                # st.session_state.is_rolling  # 正在轮播时禁用
-                len(eligible_orders) == 0  # 无可选订单时禁用
+                st.session_state.is_rolling  # 正在轮播时禁用
+                or len(eligible_orders) == 0  # 无可选订单时禁用
                 or len(st.session_state.final_winners) >= winner_count  # 已抽满时禁用
                 or total_orders_in_selected_platforms <= winner_count  # 选中平台订单数不足时禁用
             )
             
-            # 显示各种错误和警告信息
-            if not selected_platforms:
-                st.warning("请先选择购物平台")
-            elif len(eligible_orders) == 0:
-                st.error("请录入足够的平台订单")
-            elif winner_count > len(eligible_orders):
-                st.error("抽奖订单数不能超过可选订单数")
-            
-            # 开始抽奖按钮
-            elif st.button("🎬 开始抽奖", use_container_width=True, disabled=start_disabled):
+            # 开始抽奖按钮 - 始终显示，根据条件禁用
+            if st.button("🎬 开始抽奖", use_container_width=True, disabled=start_disabled):
                 if not selected_platforms:
                     st.warning("请至少选择一个平台")
                 elif total_orders_in_selected_platforms <= winner_count:
@@ -327,9 +328,13 @@ elif st.session_state.current_page == "draw":
             if st.button("✅ 选中此订单", use_container_width=True, disabled=select_disabled):
                 st.session_state.is_rolling = False  # 停止轮播
                 if st.session_state.current_rolling_order[0]:  # 订单号有效
-                    st.session_state.final_winners.append(st.session_state.current_rolling_order)
+                    # 使用中国时区（北京时间）记录当前选中时间
+                    beijing_tz = pytz.timezone('Asia/Shanghai')
+                    select_time = datetime.now(beijing_tz).strftime("%Y-%m-%d %H:%M:%S")
+                    # 保存订单号、平台和选中时间
+                    st.session_state.final_winners.append((st.session_state.current_rolling_order[0], st.session_state.current_rolling_order[1], select_time))
                     st.success(f"已选中第 {len(st.session_state.final_winners)}/{winner_count} 个中奖订单！")
-                    st.rerun()
+                st.rerun()
 
         with col_reset:
             # 重置按钮的禁用条件：没有选中的订单时禁用
@@ -358,7 +363,6 @@ elif st.session_state.current_page == "draw":
         
         # 轮播逻辑
         if st.session_state.is_rolling and eligible_orders:
-            import time
             while st.session_state.is_rolling:
                 # 随机选择一个订单
                 random_order = random.choice(eligible_orders)
@@ -385,28 +389,37 @@ elif st.session_state.current_page == "draw":
         # 显示中奖结果
         if st.session_state.final_winners:
             st.subheader(f"中奖订单（{len(st.session_state.final_winners)}/{winner_count}）")
-            winner_df = pd.DataFrame(st.session_state.final_winners, columns=['订单号', '平台'])
-            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            winner_df['时间'] = current_time
-            st.dataframe(winner_df)
+            # 现在final_winners包含订单号、平台和选中时间
+            winner_df = pd.DataFrame(st.session_state.final_winners, columns=['订单号', '平台', '时间'])
+            st.dataframe(winner_df, use_container_width=True)
         
         # 完成抽奖处理
         if len(st.session_state.final_winners) == winner_count:
             save_results = st.checkbox("保存本次抽奖结果", value=True)
             if st.button("📌 确认完成抽奖", type="primary", use_container_width=True):
-                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                # 使用中国时区（北京时间）
+                beijing_tz = pytz.timezone('Asia/Shanghai')
+                current_time = datetime.now(beijing_tz).strftime("%Y-%m-%d %H:%M:%S")
                 if save_results:
-                    # 保存中奖记录
-                    for order_num, platform in st.session_state.final_winners:
-                        st.session_state.winners.append({
-                            '订单号': order_num,
-                            '平台': platform,
-                            '时间': current_time
-                        })
-                    if save_winners(st.session_state.winners):
-                        st.success("✅ 所有中奖结果已保存！")
+                    # 保存中奖记录（确保已中奖的订单不会被重复添加）
+                    new_winners_added = False
+                    for order_num, platform, select_time in st.session_state.final_winners:
+                        # 检查订单是否已经中过奖
+                        if not any(winner['订单号'] == order_num for winner in st.session_state.winners):
+                            st.session_state.winners.append({
+                                '订单号': order_num,
+                                '平台': platform,
+                                '时间': select_time  # 使用选中时记录的时间
+                            })
+                            new_winners_added = True
+                    
+                    if new_winners_added:
+                        if save_winners(st.session_state.winners):
+                            st.success("✅ 所有中奖结果已保存！")
+                        else:
+                            st.warning("⚠️ 中奖结果保存失败")
                     else:
-                        st.warning("⚠️ 中奖结果保存失败")
+                        st.info("ℹ️ 所有选中的订单已存在于中奖记录中，无需重复保存")
                 
                 # 导出中奖结果
                 csv = winner_df.to_csv(index=False, encoding='utf-8-sig')
@@ -421,65 +434,7 @@ elif st.session_state.current_page == "draw":
                 # 重置当前轮次状态
                 st.session_state.final_winners = []
                 st.session_state.current_rolling_order = ("", "")
-
-# ============================
-# 功能3: 结果查询
-# 说明: 查询特定订单的中奖状态，展示所有中奖记录
-# ============================
-elif st.session_state.current_page == "results":
-    st.header("抽奖结果查询")
-    
-    # 查询订单是否中奖
-    st.subheader("查询订单是否中奖")
-    winner_query_input = st.text_input("请输入您的订单号:", placeholder="例如: D2023001")
-    
-    if st.button("查询中奖状态", type="primary"):
-        if not winner_query_input.strip():
-            st.warning("请输入有效的订单号")
-        else:
-            winner_found = False
-            winner_info = None
-            
-            # 遍历所有历史中奖记录进行查询
-            for winner in st.session_state.winners:
-                if winner['订单号'] == winner_query_input.strip():
-                    winner_found = True
-                    winner_info = winner
-                    break
-            
-            if winner_found:
-                st.success(f"🎉 恭喜！订单号 {winner_query_input} 在 {winner_info['时间']} 中奖了！请联系 {winner_info['平台']} 平台客服兑换。")
-            else:
-                st.info(f"📋 抱歉，您的订单号 {winner_query_input} 暂未中奖")
-    
-    # 显示所有中奖记录
-    st.subheader("所有中奖记录")
-    if len(st.session_state.winners) > 0:
-        # 转换为DataFrame便于显示
-        winners_df = pd.DataFrame(st.session_state.winners)
-        
-        # 按时间排序
-        winners_df = winners_df.sort_values(by='时间', ascending=False)
-        
-        st.dataframe(winners_df)
-        
-        # 导出功能
-        if st.button("导出中奖结果", type="primary"):
-            # 转换为CSV
-            csv = winners_df.to_csv(index=False, encoding='utf-8-sig')
-            
-            # 提供下载链接
-            st.download_button(
-                label="📥 下载CSV文件",
-                type="primary",
-                data=csv,
-                file_name=f"抽奖结果_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv"
-            )
-    else:
-        st.info("暂无抽奖记录")
-    
-    # 重置所有抽奖历史功能
+        # 重置所有抽奖历史功能
     st.subheader("历史记录管理")
     st.warning("⚠️ 重置所有抽奖历史将清除所有现有抽奖记录，请谨慎操作！")
     
@@ -565,6 +520,66 @@ elif st.session_state.current_page == "results":
                 st.info("已取消重置操作")
                 st.rerun()
 
+
+# ============================
+# 功能3: 结果查询
+# 说明: 查询特定订单的中奖状态，展示所有中奖记录
+# ============================
+elif st.session_state.current_page == "results":
+    st.header("中奖结果")
+    
+    # 查询订单是否中奖
+    st.subheader("查询订单是否中奖")
+    winner_query_input = st.text_input("请输入您的订单号：", placeholder="例如: D2023001")
+    
+    if st.button("查询中奖状态", type="primary"):
+        if not winner_query_input.strip():
+            st.warning("请输入有效的订单号")
+        else:
+            winner_found = False
+            winner_info = None
+            
+            # 遍历所有历史中奖记录进行查询
+            for winner in st.session_state.winners:
+                if winner['订单号'] == winner_query_input.strip():
+                    winner_found = True
+                    winner_info = winner
+                    break
+            
+            if winner_found:
+                st.success(f"🎉 恭喜！订单号 {winner_query_input} 在 {winner_info['时间']} 中奖了！请联系 {winner_info['平台']} 平台客服兑换。")
+            else:
+                st.info(f"📋 抱歉，您的订单号 {winner_query_input} 暂未中奖。")
+    
+    # 显示所有中奖记录
+    st.subheader("所有中奖记录")
+    if len(st.session_state.winners) > 0:
+        # 转换为DataFrame便于显示
+        winners_df = pd.DataFrame(st.session_state.winners)
+        
+        # 按时间排序
+        winners_df = winners_df.sort_values(by='时间', ascending=False)
+        
+        st.dataframe(winners_df)
+        
+        # 导出功能
+        if st.button("导出中奖结果", type="primary"):
+            # 转换为CSV
+            csv = winners_df.to_csv(index=False, encoding='utf-8-sig')
+            
+            # 提供下载链接
+            # 使用中国时区（北京时间）
+            beijing_tz = pytz.timezone('Asia/Shanghai')
+            st.download_button(
+                label="📥 下载CSV文件",
+                type="primary",
+                data=csv,
+                file_name=f"抽奖结果_{datetime.now(beijing_tz).strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv"
+            )
+    else:
+        st.info("暂无抽奖记录")
+    
 # ============================
 # 功能4: 订单池管理
 # 说明: 提供订单池的导入、保存、重置等管理功能
@@ -574,8 +589,8 @@ elif st.session_state.current_page == "order_pool_management":
     
     # 密码认证
     if not st.session_state.get('pool_management_authenticated', False):
-        password_input = st.text_input("请输入管理密码:", type="password")
-        if st.button("验证密码", key="pool_management_auth"):
+        password_input = st.text_input("请输入管理密码：", type="password")
+        if st.button("验证密码", key="pool_management_auth", type="primary"):
             if hash_password(password_input) == INITIAL_PASSWORD_HASH_ORDER_MANAGEMENT:
                 st.session_state.pool_management_authenticated = True
                 st.success("密码正确，欢迎进入订单池管理功能！")
@@ -594,7 +609,9 @@ elif st.session_state.current_page == "order_pool_management":
         
         # 显示当前订单池信息
         total_orders = sum(len(orders) for orders in st.session_state.order_pool.values())
-        st.info(f"当前订单池共有 {len(st.session_state.order_pool)} 个平台，总计 {total_orders} 个订单号")
+        # 只统计订单数大于0的平台
+        active_platforms = len([p for p, orders in st.session_state.order_pool.items() if len(orders) > 0])
+        st.info(f"当前订单池包含 {active_platforms} 个平台，总计 {total_orders} 个订单号")
         # 显示当前订单池详细信息（可选折叠）
         with st.expander("查看当前订单池详细信息"):
             for platform, orders in st.session_state.order_pool.items():
@@ -608,14 +625,14 @@ elif st.session_state.current_page == "order_pool_management":
         
         # 选择导入模式：追加或替换
         import_mode = st.radio(
-            "导入方式:",
+            "导入方式：",
             ["追加模式（保留现有数据）", "替换模式（清除现有数据）"],
             index=0
         )
         
         # 选择具体导入方式
         import_method = st.selectbox(
-            "选择导入方式:",
+            "选择导入方式：",
             ["文件上传 (CSV/XLSX)", "文本输入"]
         )
         
@@ -676,7 +693,7 @@ elif st.session_state.current_page == "order_pool_management":
         # 文件上传导入功能
         if import_method == "文件上传 (CSV/XLSX)":
             st.info("支持CSV和XLSX文件格式，文件需要包含'平台'和'主订单编号'两列数据")
-            uploaded_file = st.file_uploader("选择CSV或XLSX文件:", type=["csv", "xlsx"])
+            uploaded_file = st.file_uploader("选择CSV或XLSX文件：", type=["csv", "xlsx"])
             
             if uploaded_file is not None:
                 try:
@@ -709,7 +726,7 @@ elif st.session_state.current_page == "order_pool_management":
             st.info("例如：抖音,D2023001\n天猫,T2023002")
             
             # 文本输入区域
-            import_text = st.text_area("请输入订单数据:", height=200, placeholder="平台,主订单编号\n平台,主订单编号\n...")
+            import_text = st.text_area("请输入订单数据：", height=200, placeholder="平台,主订单编号\n平台,主订单编号\n...")
             
             # 导入按钮
             if st.button("导入订单数据", type="primary"):
@@ -763,7 +780,9 @@ elif st.session_state.current_page == "order_pool_management":
                         st.success("✅ 订单池已成功保存为初始化数据")
                         # 保存成功后，从文件重新加载初始数据以更新显示
                         refreshed_data = load_initial_order_pool()
-                        st.info(f"📊 重新加载的初始化数据包含 {len(refreshed_data)} 个平台")
+                        # 只统计订单数大于0的平台
+                        active_platforms = len([p for p, orders in refreshed_data.items() if len(orders) > 0])
+                        st.info(f"📊 重新加载的初始化数据包含 {active_platforms} 个活跃平台（订单数>0）")
                         # 显示重新加载的数据概要
                         total_orders = sum(len(orders) for orders in refreshed_data.values())
                         st.info(f"初始化数据共有 {total_orders} 个订单")
@@ -871,8 +890,4 @@ elif st.session_state.current_page == "order_pool_management":
                     st.info("已取消重置操作")
                     st.rerun()    
         
-
         
-
-
-
