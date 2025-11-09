@@ -1,2 +1,5 @@
 streamlit==1.50.0
 pandas==2.2.3
+numpy==2.2.3
+openpyxl==3.1.5  # 必须包含此项
+rich>=10.14.0  # 日志相关依赖
