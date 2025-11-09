@@ -542,7 +542,7 @@ elif st.session_state.current_page == "results":
     
     # 查询订单是否中奖
     st.subheader("查询订单是否中奖")
-    winner_query_input = st.text_input("请输入您的订单号：", placeholder="例如: D2023001")
+    winner_query_input = st.text_input("请输入您的订单号：", placeholder="例如: 6988888888888888888")
     
     if st.button("查询中奖状态", type="primary"):
         if not winner_query_input.strip():
@@ -903,5 +903,6 @@ elif st.session_state.current_page == "order_pool_management":
                     st.rerun()    
         
         
+
 
 
