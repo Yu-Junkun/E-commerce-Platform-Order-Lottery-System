@@ -20,6 +20,13 @@ import os
 import hashlib
 import time
 
+# 定义持久化目录（Streamlit Cloud 专用）
+PERSIST_DIR = "/mount/src/e-commerce-platform-order-lottery-system"  # 例如应用名为 "lottery-system"，则路径为 "/mount/src/lottery-system"
+os.makedirs(PERSIST_DIR, exist_ok=True)  # 确保目录存在
+
+# 定义 JSON 文件路径
+WINNERS_FILE = os.path.join(PERSIST_DIR, "winners.json")
+ORDER_POOL_FILE = os.path.join(PERSIST_DIR, "initial_order_pool.json")
 # ============================
 # 页面配置
 # 设置页面标题和布局
@@ -41,7 +48,8 @@ def load_winners():
         list: 抽奖记录列表，每条记录为包含订单号、平台和时间的字典
              如果文件不存在或加载失败则返回空列表
     """
-    winners_file = 'winners.json'
+    # winners_file = 'winners.json'
+    winners_file = WINNERS_FILE
     if os.path.exists(winners_file):
         try:
             with open(winners_file, 'r', encoding='utf-8') as f:
@@ -59,7 +67,8 @@ def save_winners(winners_data):
     Returns:
         bool: 保存是否成功
     """
-    winners_file = 'winners.json'
+    # winners_file = 'winners.json'
+    winners_file = WINNERS_FILE
     try:
         with open(winners_file, 'w', encoding='utf-8') as f:
             json.dump(winners_data, f, ensure_ascii=False, indent=2)
@@ -85,8 +94,8 @@ def hash_password(password):
 
 # 初始化密码（哈希值）
 # 注意：这里直接存储哈希值，不以明文形式记录原始密码
-INITIAL_PASSWORD_HASH_DRAW = "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
-INITIAL_PASSWORD_HASH_ORDER_MANAGEMENT = "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+INITIAL_PASSWORD_HASH_DRAW = st.secrets["INITIAL_PASSWORD_HASH_DRAW"]
+INITIAL_PASSWORD_HASH_ORDER_MANAGEMENT = st.secrets["INITIAL_PASSWORD_HASH_ORDER_MANAGEMENT"]
 
 # ============================
 # 订单池管理函数
@@ -97,9 +106,10 @@ def load_initial_order_pool():
     Returns:
         dict: 包含各平台订单列表的字典
     """
+    initial_order_pool = ORDER_POOL_FILE
     try:
-        if os.path.exists('initial_order_pool.json'):
-            with open('initial_order_pool.json', 'r', encoding='utf-8') as f:
+        if os.path.exists(initial_order_pool):
+            with open(initial_order_pool, 'r', encoding='utf-8') as f:
                 return json.load(f)
     except Exception as e:
         st.warning(f"加载订单池初始化数据失败: {str(e)}")
@@ -125,8 +135,9 @@ def save_initial_order_pool(order_pool_data):
     """
     try:
         # 获取当前工作目录并构建文件路径
-        current_dir = os.getcwd()
-        file_path = os.path.join(current_dir, 'initial_order_pool.json')
+        # current_dir = os.getcwd()
+        # file_path = os.path.join(current_dir, 'initial_order_pool.json')
+        file_path = ORDER_POOL_FILE
         
         # 使用绝对路径保存文件
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -466,8 +477,9 @@ elif st.session_state.current_page == "draw":
                     success = False
                     try:
                         # 获取文件的绝对路径
-                        current_dir = os.getcwd()
-                        file_path = os.path.join(current_dir, 'winners.json')
+                        # current_dir = os.getcwd()
+                        # file_path = os.path.join(current_dir, 'winners.json')
+                        file_path = ORDER_POOL_FILE
                         st.write(f"📍 文件路径: {file_path}")
                         
                         # 检查文件是否存在
@@ -891,4 +903,5 @@ elif st.session_state.current_page == "order_pool_management":
                     st.rerun()    
         
         
+
 
