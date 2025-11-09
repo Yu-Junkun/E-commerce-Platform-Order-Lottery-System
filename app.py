@@ -101,27 +101,25 @@ INITIAL_PASSWORD_HASH_ORDER_MANAGEMENT = st.secrets["INITIAL_PASSWORD_HASH_ORDER
 # 订单池管理函数
 # ============================
 def load_initial_order_pool():
-    """从本地文件加载订单池初始化数据
-    
-    Returns:
-        dict: 包含各平台订单列表的字典
-    """
-    initial_order_pool = ORDER_POOL_FILE
+    """加载订单池数据，确保返回字典类型"""
     try:
-        if os.path.exists(initial_order_pool):
-            with open(initial_order_pool, 'r', encoding='utf-8') as f:
-                return json.load(f)
+        if os.path.exists(ORDER_POOL_FILE):
+            with open(ORDER_POOL_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                # 必须是字典类型才返回，否则用默认值
+                if isinstance(data, dict):
+                    return data
+                st.warning("订单池文件内容不是字典，使用默认数据")
+    except json.JSONDecodeError:
+        st.error("订单池文件JSON格式错误，使用默认数据")
     except Exception as e:
-        st.warning(f"加载订单池初始化数据失败: {str(e)}")
-    # 如果加载失败或文件不存在，返回默认数据
+        st.error(f"加载订单池失败: {e}，使用默认数据")
+    
+    # 所有异常情况都返回标准字典结构
     return {
-        '抖音': [],
-        '天猫': [],
-        '京东': [],
-        '小红书': [],
-        '拼多多': [],
-        '微信小店': []
-        }
+        '抖音': [], '天猫': [], '京东': [],
+        '小红书': [], '拼多多': [], '微信小店': []
+    }
 
 # 保存订单池初始化数据
 def save_initial_order_pool(order_pool_data):
@@ -903,6 +901,7 @@ elif st.session_state.current_page == "order_pool_management":
                     st.rerun()    
         
         
+
 
 
 
